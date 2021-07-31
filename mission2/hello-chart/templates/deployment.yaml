@@ -1,0 +1,61 @@
+{{- $selectorLabels := include "hello-chart.selectorLabels" . -}}
+{{- $targetPort := .Values.service.targetPort -}}
+{{- $image := .Values.image.repository -}}
+{{- $version := .Values.image.version -}}
+{{- $replicas := .Values.replicaCount -}}
+{{- $chartName := .Chart.Name -}}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ $chartName }}-deployment"
+spec:
+  replicas: {{ $replicas }}
+  selector:
+    matchLabels:
+      {{- $selectorLabels | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- $selectorLabels | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ $chartName }}
+          image: "{{ $image }}:{{ $version }}"
+          env:
+            - name: DATABASE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ $chartName }}-secret"
+                  key: DATABASE_URI
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ $chartName }}-secret"
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ $chartName }}-secret"
+                  key: DB_PASSWORD
+            - name: TEST_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $chartName }}-config"
+                  key: TEST_ENV
+          ports:
+            - containerPort: {{ $targetPort }}
+          livenessProbe:
+            httpGet:
+              port: {{ $targetPort }}
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+          readinessProbe:
+            httpGet:
+              port: {{ $targetPort }}
+              path: /health
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
