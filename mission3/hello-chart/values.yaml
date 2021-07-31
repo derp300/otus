@@ -1,0 +1,34 @@
+replicaCount: 2
+
+image:
+  repository: hello-py
+  version: v1
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 9000
+  targetPort: 8000
+
+postgresql:
+  enabled: true
+  postgresqlUsername: myuser
+  postgresqlPassword: passwd
+  postgresqlDatabase: myapp
+  postgresqlHost: hello-chart-postgresql
+  service:
+    type: LoadBalancer
+    port: "5432"
+
+ingress:
+  enabled: true
+  annotations:
+    { nginx.ingress.kubernetes.io/rewrite-target: /$2 }
+  hosts:
+    - host: arch.homework
+      path: /otusapp($|/)(.*)
+
+metrics:
+  serviceMonitor:
+    enabled: true
+
