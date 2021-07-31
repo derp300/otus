@@ -1,0 +1,23 @@
+{{- $chartName := .Chart.Name }}
+{{- $port := .Values.service.port -}}
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: "{{ $chartName }}-ingress"
+  {{- with .Values.ingress.annotations }}
+  annotations:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  rules:
+  {{- range .Values.ingress.hosts }}
+    - host: {{ .host }}
+      http:
+        paths:
+          - path: {{ .path }}
+            backend:
+              serviceName: "{{ $chartName }}-service"
+              servicePort: {{ $port }}
+  {{- end }}
+
