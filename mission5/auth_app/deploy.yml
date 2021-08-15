@@ -1,0 +1,44 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-app
+  labels:
+    app: auth-app
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: auth-app
+  template:
+    metadata:
+      labels:
+        app: auth-app
+    spec:
+      containers:
+        - name: auth-app
+          image: auth-app
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DATABASE_URI
+              value: "postgresql+psycopg2://authuser:authpasswd@my-release-postgresql:5432/authdb"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-app
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      nodePort: 32090
+      targetPort: 8080
+      name: "http"  # Istio требует явного указания протокола при определенных настройках
+  selector:
+    app: auth-app
+

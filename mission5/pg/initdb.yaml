@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: initdb
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: check-db-ready
+          image: postgres:latest
+          env:
+            - name: POSTGRES_HOST
+              value: "my-release-postgresql"
+            - name: POSTGRES_PORT
+              value: "5432"
+          command:
+            - sh
+            - "-c"
+            - |
+              until pg_isready -h $POSTGRES_HOST  -p  $POSTGRES_PORT; 
+              do echo waiting for database; sleep 2; done;
+      containers:
+      - name: post-install-job
+        env:
+          - name: DATABASE_URI
+            value: "postgresql://authuser:authpasswd@my-release-postgresql:5432/authdb"
+        image: postgres:latest
+        command:
+          - sh
+          - "-c"
+          - |
+            psql $DATABASE_URI <<'EOF'
+              drop table if exists auth_user;
+              create table auth_user (
+                  id serial primary key,
+                  login varchar not null unique,
+                  password varchar,
+                  email varchar not null default '',
+                  first_name varchar not null default '',
+                  last_name varchar not null default ''
+              );
+              insert into auth_user (login, password) values ('admin', 'password');
+            EOF
+  backoffLimit: 0
+
