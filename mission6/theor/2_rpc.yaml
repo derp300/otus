@@ -1,0 +1,164 @@
+asyncapi: 2.1.0
+info:
+  title: Обработка заказов
+  version: 1.0.0
+  description: событийное взаимодействие с использование брокера сообщений
+defaultContentType: application/json
+channels:
+  billing/registerUser:
+    publish:
+      message:
+        tags:
+          - name: billing
+        name: RegisterUser
+        title: Регистрация пользователя
+        contentType: application/json
+        payload:
+          type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+            username:
+              type: string
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+            password:
+              type: string
+            phone:
+              type: string
+            address:
+              type: string
+          required:
+            - username
+            - password
+            - email
+        headers:
+          type: object
+        examples:
+          - payload:
+              username: jastat
+              firstName: Jason
+              lastName: Statham
+              email: jas@stat.com
+              phone: '+71234567889'
+              password: 1234qqq
+              address: NY 54765
+    subscribe:
+      message:
+        name: RegisterUserResponse
+        headers:
+          type: object
+        examples:
+          - payload:
+              status: OK
+              
+  billing/transfer:
+    publish:
+      message:
+        tags:
+          - name: billing
+        name: MoneyTransfer
+        title: Перечисление денег на аккаунт пользователя
+        contentType: application/json
+        payload:
+          type: object
+          properties:
+            price:
+              type: integer
+              format: int64
+          required:
+            - price
+        headers:
+          type: object
+        examples:
+          - payload:
+              price: 100500
+    subscribe:
+      message:
+        name: MoneyTransferResponse
+        headers:
+          type: object
+        examples:
+          - payload:
+              status: OK
+              
+  billing/withdraw:
+    publish:
+      message:
+        tags:
+          - name: billing
+        name: WithdrawMoney
+        title: Снятие денег с аккаунта пользователя
+        contentType: application/json
+        payload:
+          type: object
+          properties:
+            price:
+              type: integer
+              format: int64
+          required:
+            - price
+        headers:
+          type: object
+        examples:
+          - payload:
+              price: 100500
+    subscribe:
+      message:
+        name: WithdrawMoneyResponse
+        headers:
+          type: object
+        examples:
+          - payload:
+              status: OK
+              
+  order/create:
+    publish:
+      message:
+        tags:
+          - name: order
+        name: OrderCreate
+        title: Создание заказа
+        contentType: application/json
+        payload:
+          type: object
+          properties:
+            price:
+              type: integer
+              format: int64
+          required:
+            - price
+        headers:
+          type: object
+        examples:
+          - payload:
+              price: 100500
+    subscribe:
+      message:
+        name: OrderCreateResponse
+        headers:
+          type: object
+          properties:
+            correlationId:
+              type: string
+        examples:
+          - payload:
+              status: OK
+              
+  notification/sendNotification:
+    publish:
+      message:
+        payload:
+          type: object
+          properties:
+            email:
+              type: string
+              format: email
+        examples:
+          - payload:
+              email: jas@stat.com
