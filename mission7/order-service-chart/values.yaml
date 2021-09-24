@@ -1,0 +1,24 @@
+replicaCount: 2
+
+image:
+  repository: myapp:latest
+
+service:
+  type: NodePort
+  port: 9000
+  targetPort: 8000
+
+postgresql:
+  enabled: true
+  postgresqlUsername: myuser
+  postgresqlPassword: passwd
+  postgresqlDatabase: mydb
+  service:
+    port: "5432"
+
+ingress:
+  enabled: true
+  hosts:
+    - host: arch.homework
+      paths: "/"
+

@@ -1,0 +1,45 @@
+{{- $targetPort := .Values.service.targetPort -}}
+{{- $chartName := .Chart.Name -}}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ $chartName }}-deployment"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "order-service-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "order-service-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ $chartName }}
+          image: {{ .Values.image.repository }}
+          imagePullPolicy: Never
+          ports:
+            - name: web
+              containerPort: {{ $targetPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              port: {{ $targetPort }}
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+          readinessProbe:
+            httpGet:
+              port: {{ $targetPort }}
+              path: /health
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          env:
+            - name: DATABASE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: DATABASE_URI
+

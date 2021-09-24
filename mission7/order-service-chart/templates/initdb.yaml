@@ -1,0 +1,60 @@
+{{- $postgresHost := printf "%s-postgresql" .Release.Name }}
+{{- $postgresPort := .Values.postgresql.service.port }}
+{{- $postgresUserName := .Values.postgresql.postgresqlUsername }}
+{{- $postgresPasswd := .Values.postgresql.postgresqlPassword }}
+{{- $postgresDb := .Values.postgresql.postgresqlDatabase }}
+
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "initdb"
+spec:
+  template:
+    metadata:
+      name: "initdb"
+      annotations:
+        # This is what defines this resource as a hook. Without this line, the
+        # job is considered part of the release.
+        "helm.sh/hook": post-install
+        "helm.sh/hook-weight": "-5"
+        "helm.sh/hook-delete-policy": hook-succeeded
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: check-db-ready
+          image: postgres:latest
+          env:
+            - name: POSTGRES_HOST
+              value: "{{ $postgresHost }}"
+            - name: POSTGRES_PORT
+              value: "{{ $postgresPort }}"
+          command:
+            - sh
+            - "-c"
+            - |
+              until pg_isready -h $POSTGRES_HOST -p $POSTGRES_PORT;
+              do echo waiting for database; sleep 2; done;
+      containers:
+      - name: initdb
+        image: postgres:latest
+        env:
+          - name: DATABASE_URI
+            value: "postgresql://{{ $postgresUserName }}:{{ $postgresPasswd }}@{{ $postgresHost }}/{{ $postgresDb }}"
+        command:
+          - sh
+          - "-c"
+          - |
+            psql $DATABASE_URI <<'EOF'
+              create table myorder(
+                id serial primary key,
+                count integer not null,
+                price integer not null,
+                created timestamp not null default now(),
+                updated timestamp not null default now()
+              );
+              insert into myorder (count, price, created, updated) 
+                values (1, 100, now(), now());
+            EOF
+  backoffLimit: 2
+

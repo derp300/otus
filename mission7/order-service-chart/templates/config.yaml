@@ -1,0 +1,15 @@
+{{- $username := .Values.postgresql.postgresqlUsername -}}
+{{- $password := .Values.postgresql.postgresqlPassword -}}
+{{- $host := printf "%s-postgresql" .Release.Name -}}
+{{- $port := .Values.postgresql.service.port -}}
+{{- $database := .Values.postgresql.postgresqlDatabase -}}
+
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backend-secret
+type: Opaque
+data:
+  DATABASE_URI: {{ printf "postgresql://%s:%s@%s:%s/%s" $username $password $host $port $database | b64enc | quote }}
+

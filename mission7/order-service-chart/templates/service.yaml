@@ -1,0 +1,21 @@
+{{- $chartName := .Chart.Name }}
+{{- $labels := include "order-service-chart.labels" . -}}
+{{- $port := .Values.service.port -}}
+{{- $targetPort := .Values.service.targetPort -}}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ $chartName }}-service"
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - protocol: TCP
+      port: {{ $port }}
+      targetPort: {{ $targetPort }}
+      name: web
+  selector:
+  {{- include "order-service-chart.selectorLabels" . | nindent 4 }}
+

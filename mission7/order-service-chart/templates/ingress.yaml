@@ -1,0 +1,22 @@
+{{- $chartName := .Chart.Name }}
+{{- $port := .Values.service.port -}}
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: "{{ $chartName }}-ingress"
+  annotations:
+    # use the shared ingress-nginx
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  {{- range .Values.ingress.hosts }}
+    - host: {{ .host }}
+      http:
+        paths:
+          - path: {{ .path }}
+            backend:
+              serviceName: "{{ $chartName }}-service"
+              servicePort: {{ $port }}
+  {{- end }}
+
